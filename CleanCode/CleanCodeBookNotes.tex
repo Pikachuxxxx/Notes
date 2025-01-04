@@ -1,0 +1,192 @@
+\documentclass[14pt]{article}
+
+\usepackage{amsmath, fullpage}
+\usepackage{hyperref}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily}
+
+\begin{document}
+
+\title{Clean Code Book Notes}
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%
+\section*{Chapter 1}
+\begin{itemize}
+
+	\item \textbf{Leblanc's Law: Later = Never}
+	\item Never delay writing good code, always write it starting from prototype stage, don't just do it to get something working, this will never end well and cause mess and never be refactored. As mess builds up  productivity decreases with time.
+	\item \textbf{Reducing NOISE will make the code look cleaner, don't show user the code that need intent from somewhere else, talk about what's happening now}
+	\item Plan ahead and write good/clean code from start
+	\item Only the BEST and BRIGHTEST are selected for the tiger team! 
+	\item Manager's want truth even if it's bitter, the schedule depends on the programmer at the end of the day, they will defend the schedule with customers, it's your job to plan ahead and have adequate time to do things correctly so thread carefully while planning. Don't be unprofessional, stick to quality of code.
+	\item messy code will never make you meet the deadlines, the only way to meet deadlines, the only way to go fast, is to keep the code as clean as possible
+	\item being able to recognize good vs bad code is not the same as being able to write clean code
+	\item \textbf{Some of us are born with it, some of have to fight to acquire it} - this applies to anything in life
+	\item clean code = elegant, easy to read, provides only way to do things, performant, has tests, makes it easier for others to extend it, orderly and simple and cared for, non-duplicated, does only one thing, smaller is better (lol)
+	\item Duplication and expressiveness, do only one thing and simple abstractions - tools to improve code quality: Jon jeffres
+	\item Tests force the code to be clean and reliable, add them early
+	\item Boy scout rule: \textit{leave the campground cleaner than you found it.}
+	\item practice! practice! practice!
+\end{itemize}
+
+	\textit{When hand-washing was first recommended to physicians by Ignaz Semmelweis in 1847, it was rejected on the basis that doctors were too busy and wouldn’t have time to wash their hands between patient visits} \\
+	
+	\textit{Gracie Jiu Jistu, founded and taught by the Gracie family in Brazil. We see Hakkoryu Jiu Jistu, founded and taught by Okuyama Ryuho in Tokyo. We see Jeet Kune Do, founded and taught by Bruce Lee in the United States.} \\
+
+%%%%%%%%%%%%%%%%%%%%%
+\section*{Chapter 2}
+\begin{itemize}
+
+	\item \textbf{Names should reveal intent} - let it be variable, function, classes, DS, package etc.
+	\item The name of a variable, function, or class, should answer all the big questions. It should tell you why it exists, what it does, and how it is used, of it requires a comment, you've failed at naming.
+	\item Avoid leaving false clues that obscure the meaning of the code ex. AccountList variable must be a list.
+	\item Use pronounceable and searchable names
+	\item Method names should have verbs
+	\item Don't let people use mental mapping to remember variable names etc. be clear about names and their intent, clarity is king
+	\item When constructors are overloaded, use static factory methods with names that
+describe the arguments. Consider enforcing their use by making the corresponding constructors private. Ex. in RZUUID we have FromStrFactory, this is a wrapper over one of the constructors, don't let users directly access the constructors
+	\item Pick one word for one abstract concept and stick with it, for ex. don't have release/destroy/freeResource for the same thing be consistent with the concept
+	\item do what it means, if you call a functions "add", it must add something, don't call it that for the sake of consistency
+	\item use solution domain names, math/design patterns/algos/CS terms etc.
+	\item prefixes and suffixes add context to naming, they suggest they belong to a family, ex. \lstinline|fsGetSize(), fsWriteToDisk| suggest they are from the filesystem API
+	\item don't add gratuitous context ex. $RZRenderContext$, when using an IDE typing RZ will give a plethora of stuff, so keep the names simple
+	 
+\end{itemize}
+%%%%%%%%%%%%%%%%%%%%%
+\section*{Chapter 3}
+\begin{itemize}
+
+	\item \textbf{First Rule: Keep the functions as small as possible}
+	\item Second Rule: Keep the functions smaller that the first rule
+	\item Functions shouldn't be 100 lines long, hardly 20 at max
+	\item Functions should tell a story, be transparent and obvious
+	\item Blocks within $if$ statements, $else$ statements, $while$ statements, and so on should be one line long. Probably that line should be a function call
+	\item \textbf{Do one thing!} - Functions should be small, do only one thing and do that well and do only that
+	\item If a function does only those steps that are one level below the stated name of the function, then the function is doing one thing. If it does things on another layer below, split it into the next layer of abstraction
+	\item All statements within the functions must be on the same level of abstraction for it do only one thing
+	\item \textbf{Stepdown rule:} We want the code to be readable from a top-down structure and tell a story
+	\item Problems with $switch$ statement: it's big, does more that one thing, violates SRP (single responsibility principle), violates OCP (open closed principle)
+	\item Use descriptive names and be consistent, use the same nouns, verbs in function names, stick to the convention initially agreed upon
+	\item Use a phraseology to tell story about function names
+	\item Keep the number of arguments to a minimum, more than 3 is a clutter, as Lois says "De-Clutter!" consider using a struct in that case
+	\item Args are almost and always inputs, keep output args minimum and rely on return types instead
+	\item Passing a boolean into a function is a truly terrible practice, avoid them! This means that the function does more than one thing
+	\item Don't use dyadic form (2 args) unless they have a natural cohesion and ordering, ex. setCartesian(int, int) is fine but passing the fstream to a writeFile function along with path name is not a good function ex. writeFile(fstream, String) is Nah!
+	\item Reducing the number of arguments by creating objects out of them may seem like cheating, but it’s not, use PODs as function arguments increases
+	\item Functions that take variable arguments can be monads, dyads, or even triads. But it would be a mistake to give them more arguments than that
+	\item Function names should be verbs that explains their intent clearly
+	\item \textbf{Have no side effects!} - don't promise to do one thing and modify something else, there should be no hidden drama! These lead to \textbf{temporal coupling!}
+	\item \textbf{Anything that forces you to check the function signature is equivalent to a double-take. It’s a cognitive break and should be avoided}
+	\item Functions should either do something or answer something, but not both. \textit{while this is good practice, I don't completely agree with it, consider a function that send data over the network using sockets, this will return the amount of data that was successfully transmitted while also telling sockets to send the given data, here while this principle is violated, it's okay to do so!, thread this rule with caution while applying in practice}
+	\item \textbf{DRY principle:} Don't repeat yourself. Avoid duplication!
+	\item \textit{Caution!} \textbf{Structured Programming:} Dijkstra said that every function, and every block within a function, should have one entry and one exit. Following these rules means that there should only be one return statement in a function, no break or continue statements in a loop, and never, ever, any goto statements
+	\item How the author write better functions? \textit{When I write functions, they come out long and complicated. They have lots of indenting and nested loops. They have long argument lists. The names are arbitrary, and there is duplicated code. But I also have a suite of unit tests that cover every one of those clumsy lines of code. So then I massage and refine that code, splitting out functions, changing names, eliminating duplication. I shrink the methods and reorder them. Sometimes I break out whole classes, all the while keeping the tests passing}
+	\item Functions are VERBS, classes are NOUNS of the language to TELL A STORY!
+
+\end{itemize}
+%%%%%%%%%%%%%%%%%%%%%
+\section*{Chapter 4}
+\begin{itemize}
+	
+	\item Avoid comments unless you can't express yourself enough via code or need to provide a more deeper thought process/insights or architecture design decision or caution
+	\item So when you find yourself in a position where you need to write a comment, think it through and see whether there isn’t some way to turn the tables and express yourself in code. Every time you express yourself in code, you should pat yourself on the back
+	\item Spend the energy in writing more expressive code rather writing comments instead
+	\item Comments are hard to maintain and can quickly become obsolete and misleading as code evolves over time
+	\item Comments are valid while trying to explain intent/warning and clarify some decision made that is beyond the logic and intent of the functions
+	\item TODO comments are fine but don't use them as an excuse to leave bad code behind!
+	\item Don't write redundant comments, ex. inline get/set functions doesn't certainly need the energy to write comments
+	\item Usage related comments are fine, they act as docs in a larger scope, comment the design not the obvious code
+	\item \textbf{Don't leave commented code!} - \textit{Others who see that commented-out code won’t have the courage to delete it. They’ll think it is there for a reason and is too important to delete. So commented-out code gathers like dregs at the bottom of a bad bottle of wine}
+	\item 
+	
+\end{itemize}
+%%%%%%%%%%%%%%%%%%%%%
+\section*{Chapter 5}
+\begin{itemize}
+
+	\item Keep functions that are related in terms of a concept close together to avoid jumping all over and reduce cognitive strain on the reader, keep the vertical distance to minimum and respect conceptual affinity
+	\item If one function calls another, they should be vertically close, and the caller should be above the callee, if at all possible
+	\item Keep the horizontal limit to 80-100-120 lines max
+	\item Horizontal alignment: controversial topic let's leave this to personal preferences
+	\item As a team/individual stick to some rules and follow them consistently
+
+\end{itemize}
+%%%%%%%%%%%%%%%%%%%%%
+\section*{Chapter 6}
+\begin{itemize}
+
+	\item A class does not simply push its variables out through getters and setters. Rather it exposes abstract interfaces that allow its users to manipulate the \textit{essence of the data}, without having to know its implementation
+	\item \textbf{Objects:} They hide their data under some abstractions provide functions to operate on them
+	\item \textbf{Data Structures:} They expose their data and have no meaningful functions
+	\item Objects and Data Structures are kinda of virtually opposite, \textbf{Procedural code (code using data structures) vs OOP}
+	\item Procedural code makes it easy to add new functions without changing the Data Structures where as OO code makes it easier to add new classes without changing existing functions
+	\item Procedural can't easily add new data structures while OO can't easily add new functions because all classes must change
+	\item the things that are hard for OO are easy for procedures, and the things that are hard for procedures are easy for OO!
+	\item In any complex system there are going to be times when we want to add new data types rather than new functions. \textbf{For these cases objects and OO are most appropriate}
+	\item On the other hand, there will also be times when we’ll want to add new functions as opposed to data types. \textbf{In that case procedural code and data structures will be more appropriate} \\ For ex. in a rendering backend abstraction, it's better to have it as PODs as we add new functionalities as the no. of backend API classes are limited to 2 or 3 (DX12/VK)
+	\item \textbf{Law Of Demeter:} TBD TBD TBD
+	\item BASICALLY don't return too many different types objects as they lead to an explosion of method calls and knowledge, keep the abstraction simple over the bigger picture operation, your abstraEction should handle your end goal in 1-2 function calls at most
+
+\end{itemize}
+%%%%%%%%%%%%%%%%%%%%%
+\section*{Chapter 7}
+\begin{itemize}
+	
+	\item Exceptions helps maintain code aesthetics and separate error handling from function class. For ex. just throw a exception and handle it elsewhere
+	\item keeps things de-coupled and doesn't crash the program, it provides an alternative path
+	\item While they are perfect for languages like python scripts to handle builds etc. generic renderer cannot benefit from exceptions as a game shouldn't cause such 
+behaviour
+	\item idk just go with flow and intuition
+	
+\end{itemize}
+%%%%%%%%%%%%%%%%%%%%%
+\section*{Chapter 8}
+\begin{itemize}
+
+	\item Frequent type casting is not clean code
+	\item Write wrappers over third party libs to restrict access and set boundaries for the API. Tailor the interface to meet the needs of the application over other's libraries/modules
+	\item While using a boundary interface, keep it inside the class, or close family of classes, where it is used. Avoid returning it from, or accepting it as an argument to, public APIs
+	\item \textbf{When trying out a new library, Instead of experimenting and trying out the new stuff in our production code, we could write some tests to explore our understanding of the third-party code} - This is called learning tests, use this to learn the API and see how it would be integrated with our code
+	\item The learning tests end up costing nothing. We had to learn the API anyway, and writing those tests was an easy and isolated way to get that knowledge
+	\item They also help track behavioral changes with new releases of third party libraries - a win-win situation
+	\item \textbf{Use Adapter Pattern to fake API that will be designed in future}
+	\item When we use code that is out of our control, special care must be taken to protect our investment and make sure future change is not too costly and defines tests that set the expectations clear
+	\item Use them in very few places and that too wrap them over or use adapter to keep direct interaction to a minimum
+	
+\end{itemize}
+%%%%%%%%%%%%%%%%%%%%%
+\section*{Chapter 9}
+\begin{itemize}
+
+	\item \textbf{Unit Tests} are the corner stone of \textbf{Production Code}
+	\item Write tests first and let your API evolve while keeping the tests working, \textbf{in fact production code and tests are written together}
+	\item Good Tests will make the API ready for production environment and keep the product stable 
+	\item \textbf{First Law:} You may not write production code until you have written a failing unit test
+	\item \textbf{Second Law:} You may not write more unit tests that are sufficient to failing, unless they can compile, write compilable code before any tests pass
+	\item \textbf{Third Law:} You may not write more production code than sufficient to pass the current failing unit tests, don't get lost in writing new stuff, make the tests pass before adding new functionality
+	\item If you don’t keep your tests clean, you will lose them. And without them, you lose the very thing that keeps your production code STABLE
+	\item Without tests you will be reluctant to make changes because of the fear that you will introduce undetected bugs and break other things
+	\item What makes a clean test? Three things. Readability, readability, and readability - \textit{Think of them like API usage docs and this thought process should help you write clean and good tests}
+	\item Reduce noise while writing tests to keep intent clear, don't force people to read unnecessary details that won't serve the purpose at hand
+	\item \textbf{BUILD-OPERATE-CHECK pattern:} Each of the tests is clearly split into three parts. The first part builds up the test data, the second part operates on that test data, and the third part checks that the operation yielded the expected results
+	\item Programming language and Test API abstractions help write cleaner tests, for ex. GTest and noexcept stuff will give you a wrapper API to write tests and keep it simple
+	\item Write only one assert per test and one concept should be tested per test
+	\item \textbf{F.I.R.S.T} - Fast - meh, Independent - doesn't depend on other tests, Repeatable - run in every env and config, Self-Validating - either pass or fail, Timely - write just before production code
+	
+\end{itemize}
+%%%%%%%%%%%%%%%%%%%%%
+\section*{Chapter 10}
+\begin{itemize}
+
+	\item Classes should be small, same as functions keep them as short as possible - (\textit{not literally thought, we use a a different metric like no. of responsibilities})
+	\item There's no hard limits like functions but keep the no. of responsibilities it does to minimum, a $ShaderLibrary$ class should be relative small enough to just handle load/unloading shaders etc. it doesn't make sense for it to handle shader manipulation, like setting params etc. keep it's job to simple book keeping of shaders and be done with it
+	\item \textbf{SRP - Single Responsibility Principle} - A class should have only one reason to change. okay wdym? - one way is to maintain a cognitive cohesion over it's functions, a PhysicsSystem can't do any rendering stuff etc. or a AssetClass can't contain Version, it must be a separate class called AssetVersion for decoupling and to respect SRP
+	\item \textbf{ask yourself this - } Do you want your tools organized into toolboxes with many small drawers each containing well-defined and well-labeled components? Or do you want a few drawers that you just toss everything into? 
+	\item \textbf{At any given time while writing classes or functions, the reader should only have a mental map of the minimal no. of systems to understand the problem being solved at hand, unnecessary mind mapping of bloated information that goes all over the place is an indication of bad code}
+	\item 
+	
+	
+\end{itemize}
+%%%%%%%%%%%%%%%%%%%%%
+\end{document}
