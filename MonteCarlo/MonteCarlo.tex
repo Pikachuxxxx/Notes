@@ -4,114 +4,143 @@
 \usepackage{hyperref}
 \usepackage{amssymb}
 \usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \geometry{margin=2cm}
 \setlength{\parskip}{1em}
 \setlength{\parindent}{0em}
+\lstset{
+  language=C,                        % Set language to C for syntax highlighting
+  numberstyle=\tiny\color{gray},      % Line number style
+  stepnumber=1,                       % Number every line
+  numbersep=5pt,                      % Distance between code and line numbers
+  backgroundcolor=\color{lightgray},  % Background color for code
+  frame=single,                       % Draw a box around the code
+  rulecolor=\color{black},            % Color of the box
+  keywordstyle=\color{blue},          % Keywords in blue
+  commentstyle=\color{gray},         % Comments in green
+  stringstyle=\color{red},            % Strings in red
+  basicstyle=\ttfamily\footnotesize,  % Font style and size
+  breaklines=true,                    % Break long lines
+  showspaces=false,                   % Don't show spaces
+  showstringspaces=false,             % Don't show spaces in strings
+  captionpos=b                        % Position of the caption (bottom)
+}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\title{Monte Carlo and Importance Sampling}
+\title{Monte-Carlo and Importance Sampling}
 \author{Phani Srikar}
 \begin{document}
 \maketitle
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
-	In computer graphics, numerical integration is essential for solving equations like global illumination, ray tracing, and the rendering  equation integrals, since it's efficient with discrete machine like computers over analytical methods. Efficient discrete sampling methods determine the accuracy and performance of these techniques. 
+	In computer graphics, numerical integration is essential for solving equations like global illumination, ray tracing, and the rendering equation, numerical methods are more efficient with discrete machine like computers over analytical methods. Efficient discrete sampling methods determine the accuracy and performance of these techniques and help reduce noise. 
 	
 	In this article, we explore various sampling methods, starting from Monte Carlo methods to more sophisticated techniques like Importance Sampling and Quasi-Random sampling functions like Halton and Hammersley sequences. 
 	
-	By the end, you'll understand the trade-offs between different sampling techniques, how to use them. I will try to provide derivations, references and examples wherever I can.
+	By the end, you and me can understand the different sampling techniques, their trade-offs, how and when to use them. I will try to provide derivations, code, references and examples wherever I can.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section {Monte Carlo Sampling}
 
-Monte Carlo sampling uses statistical random sampling to evaluate integrals, by trying to reduce variance as much as possible. It is particularly useful in higher-dimension domains where we cannot estimate the PDF.
+	Monte Carlo sampling uses statistical random sampling to evaluate integrals, by trying to reduce variance as much as possible. \textbf{It is particularly useful in higher-dimension domains where we cannot estimate the PDF of the domain we are operating on.}
 
 \textbf{Example: Estimating the Integral of \( f(x) = x^2 \)}
 
-Consider the integral of the function \( f(x) = x^2 \) over the interval \( [0, 1] \), which we want to estimate using Monte Carlo sampling. The analytical solution to this is:
+Consider the integral of the function $ f(x) = x^2 $ over the interval $ [0, 1] $, which we want to estimate using Monte Carlo sampling. The analytical solution to this is:
 
 \[
-I = \int_0^1 x^2 \, dx = \left[ \frac{x^3}{3} \right]_0^1 = \frac{1}{3} \approx 0.3333.
+	I = \int_0^1 x^2 \, dx = \left[ \frac{x^3}{3} \right]_0^1 = \frac{1}{3} \approx 0.3333.
 \]
 
-To estimate this integral using Monte Carlo sampling, we randomly sample \( N \) points \( x_1, x_2, \dots, x_N \) uniformly from the interval \( [0, 1] \), and evaluate the function \( f(x) = x^2 \) at each of these points. The integral can be approximated by averaging the function values at these random points and then scaling by the length of the interval \( b - a \), where \( a = 0 \) and \( b = 1 \) for our example.
+	To estimate this integral using Monte Carlo sampling, we randomly sample $N$ points $ x_1, x_2, \dots, x_N $ uniformly from the interval $[0, 1]$, and evaluate the function $f(x) = x^2$ at each of these points. The integral can then be approximated by averaging the function values at these random points and then scaling by the length of the interval $b - a$, where $a = 0$ and $b = 1$.
 
 The Monte Carlo estimate of the integral is:
 
+%% TODO: Draw a nice box here
 \[
-I \approx \frac{b - a}{N} \sum_{i=1}^{N} f(x_i)
+	I \approx \frac{b - a}{N} \sum_{i=1}^{N} f(x_i)
 \]
 
 where:
 \begin{itemize}
-	\item \( x_1, x_2, \dots, x_N \) are uniformly sampled points from the interval \( [0, 1] \)
-	\item \( f(x_i) = x_i^2 \) is the value of the function at each point
+	\item $x_1, x_2, \dots, x_N$ are uniformly sampled points from the interval $[0, 1]$
+	\item $f(x_i) = x_i^2$ is the value of the function at each point
+	\item $\frac{b - a}{N}$ is the scaling factor of the domain interval
 \end{itemize}
 
-For example, if we sample 5 random points \( x_1 = 0.2, x_2 = 0.8, x_3 = 0.3, x_4 = 0.7, x_5 = 0.5 \), we compute the function values:
+For example, if we sample 5 random points \( x_1 = 0.2, x_2 = 0.8, x_3 = 0.3, x_4 = 0.7, x_5 = 0.5 \), we compute the function values as:
 
 \[
-f(x_1) = 0.2^2 = 0.04, \quad f(x_2) = 0.8^2 = 0.64, \quad f(x_3) = 0.3^2 = 0.09, \quad f(x_4) = 0.7^2 = 0.49, \quad f(x_5) = 0.5^2 = 0.25.
+	f(x_1) = 0.2^2 = 0.04, \quad f(x_2) = 0.8^2 = 0.64, \quad f(x_3) = 0.3^2 = 0.09, \quad f(x_4) = 0.7^2 = 0.49, \quad f(x_5) = 0.5^2 = 0.25.
 \]
 
 The Monte Carlo estimate of the integral is the average of these values:
 
 \[
-I \approx \frac{(1 - 0)}{5} (0.04 + 0.64 + 0.09 + 0.49 + 0.25) = 0.302.
+	I \approx \frac{(1 - 0)}{5} (0.04 + 0.64 + 0.09 + 0.49 + 0.25) = 0.302.
 \]
 
-This is an approximation of the exact integral \( \frac{1}{3} \). As \( N \) increases, the Monte Carlo estimate will converge to the exact value of the integral.
+This is an approximation of the exact integral $\frac{1}{3}$. As $N$ increases, the Monte Carlo approximation will converge to the exact value of the integral.
 
 \textbf{Cons: High variance}
 
-While Monte Carlo sampling is a powerful technique, it can still suffer from high variance due to random fluctuations in the sampled points. In this example, some regions of the interval might have more points clustered together, leading to inaccurate estimates in those regions. This is known as \textbf{clumping} of samples.
+	While Monte Carlo sampling is a powerful technique, it can still suffer from high variance due to random fluctuations in the sampled points. In this example, some regions of the interval might have more points clustered together, leading to inaccurate estimates in those regions. This is known as \textbf{clumping} of samples. 
+
+	Consider a scenario where you sample a lightmap, it can lead to clumping of samples in regions where there are less high-frequency light sources, this can lead to loss of information and cause aliasing of high-frequency samples. A PDF \textit{(probability distribution function)} weight in this case would yield more accurate approximation.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Importance Sampling}
 
-
-\section*{3. Importance Sampling}
-
-Importance sampling optimizes Monte Carlo by focusing samples in regions where the integrand contributes most to the result. Instead of uniform sampling, we sample from a distribution \( p(x) \) that approximates the shape of the function \( f(x) \). \textbf{Basically slapping Monte Carlo samples with a PDF \textit{(probability distribution function)} reduces the variance and convergence rate.}
-
-Adjusting the Integral
-When sampling from \( p(x) \), the integral becomes:
-\[ I = \int \frac{f(x)}{p(x)} p(x) dx. \]
+	Importance sampling optimizes Monte Carlo by focusing samples in regions where the integrand contributes most to the result. Instead of uniform sampling, we sample from a distribution $p(x)$ that approximates the shape of the function $f(x)$. \textbf{Basically slapping Monte-Carlo sampling with a PDF \textit{(probability distribution function)} reduces the variance and convergence rate.}
+%%%%%%%%%%%%%%%%%%%%%
+\subsection{Derivation: }
+	Adjusting the Integral, when sampling from $p(x)$, the integral becomes:
+\[ 
+	I = \int \frac{f(x)}{p(x)} p(x) dx. 
+\]
 
 The Monte Carlo approximation is then:
-\[ I \approx \frac{1}{N} \sum_{i=1}^N \frac{f(x_i)}{p(x_i)}, \]
-where \( x_i \sim p(x) \).
 
-Example: Cosine-Weighted Hemisphere Sampling
-For diffuse shading, sampling directions proportional to \( \cos(\theta) \) reduces variance. The PDF for cosine-weighted sampling is:
-\[ p(\omega_i) = \frac{\cos(\theta)}{\pi}. \]
-The Monte Carlo estimate becomes:
-\[ L_o \approx \frac{1}{N} \sum_{i=1}^N \frac{L_i(\mathbf{x}, \omega_i) f_r(\omega_i, \omega_o) (\mathbf{n} \cdot \omega_i)}{p(\omega_i)}. \]
-
-Substituting \( p(\omega_i) \), the weight simplifies, and we achieve more efficient integration.
-
-\section*{4. Quasi-Random Sequences: Halton and Hammersley}
-
-Quasi-random (aka low descrepancy) sequences are deterministic sequences that aim to uniformly cover a given domain. They are particularly useful in numerical integration and rendering tasks where efficient sampling is required. This section will derive and explain the relationship between the 
-radical inverse function, Van der Corput sequence, Hammersley sequence, and Halton sequence. We start by defining the assumptions of a prime base.
-
-\subsection{Prime Base and Arithmetic Progression}
-Let \( p \) be a prime number. Any non-negative integer \( k \) can be expressed in the base \( p \) as:
-\[
-    k = a_0 + a_1 p + a_2 p^2 + \cdots + a_m p^m,
+\[ 
+	I \approx \frac{1}{N} \sum_{i=1}^N \frac{f(x_i)}{p(x_i)}, 
 \]
-where \( 0 \leq a_i < p \) are the digits of \( k \) in base \( p \). The summation above represents an arithmetic progression where each term contributes to the positional representation of \( k \).
+where \( x_i \sim p(x) \).
+%%%%%%%%%%%%%%%%%%%%%
+\subsection{Example: Cosine-Weighted Hemisphere Sampling}
+	In diffuse shading, sampling directions which are proportional to \( \cos(\theta) \) reduces variance. The PDF for cosine-weighted sampling is:
+\[ 
+	p(\omega_i) = \frac{\cos(\theta)}{\pi}. 
+\]
 
-To normalize this representation into the unit interval \([0, 1)\), we divide \( k \) by increasing powers of \( p \), effectively creating a fractional expansion:
+The Monte Carlo estimate then becomes (in the rendering equation):
+\[ 
+	L_o \approx \frac{1}{N} \sum_{i=1}^N \frac{L_i(\mathbf{x}, \omega_i) f_r(\omega_i, \omega_o) (\mathbf{n} \cdot \omega_i)}{p(\omega_i)}. 
+\]
+
+Substituting \( p(\omega_i) \), with the sample weight simplifies the integral, aiding to achieve more accurate approximation.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Quasi-Random Sequences}
+
+	Quasi-random (aka low discrepancy) sequences are deterministic sequences that uniformly cover a given domain with sufficient randomization and good variance and fast to compute. This section will derive and explain the relationship between the Radical Inverse function, Van der Corput sequence, Hammersley sequence, and Halton sequence. 
+
+\subsection{Derivation: Radical Inverse function using arithmetic progression in a prime base system}
+	Let $p$ be a prime number. Any non-negative integer $k$ can be expressed in the base $p$ as:
+\[
+	k = a_0 + a_1 p + a_2 p^2 + \cdots + a_m p^m,
+\]
+where $0 \leq a_i < p$ are the digits of $k$ in base $p$. The summation above represents an arithmetic progression where each term contributes to the positional representation of digits of $k$.
+
+To normalize this representation into the unit interval $[0, 1)$, we divide $k$ by increasing powers of $p$, creating a fractional expansion:
 \[
     \phi_p(k) = \frac{a_0}{p} + \frac{a_1}{p^2} + \frac{a_2}{p^3} + \cdots + \frac{a_m}{p^{m+1}}.
 \]
-This function \( \phi_p(k) \) is known as the \textbf{radical inverse function} in base \( p \).
+This function $\phi_p(k)$ is known as the \textbf{radical inverse function} in base $p$.
 
-\subsection{Radical Inverse Function}
-The radical inverse function \( \phi_p(k) \) essentially mirrors the digits of \( k \) in base \( p \) and places them after the decimal point. For a given base \( p \):
+The radical inverse function \( \phi_p(k) \) essentially mirrors the digits of $k$ in base $p$ and places them after the decimal point. For a given base $p$:
 \[
     \phi_p(k) = \sum_{i=0}^m \frac{a_i}{p^{i+1}},
 \]
-where \( a_i \) are the coefficients (digits) in the base-\( p \) expansion of \( k \).
+where $a_i$ are the coefficients (digits) in the base-$p$ expansion of $k$.
 
 \textbf{Example (Base 2):}
 For \( k = 5 \), its binary representation is \( 101_2 \):
@@ -120,17 +149,18 @@ For \( k = 5 \), its binary representation is \( 101_2 \):
 \]
 
 The radical inverse function is the core building block for constructing quasi-random sequences such as the Van der Corput, Hammersley, and Halton sequences.
-
-\subsection{Van der Corput Sequence}
-The \textbf{Van der Corput sequence} is a one-dimensional low-discrepancy sequence constructed directly from the radical inverse function. For base \( p = 2 \):
+%%%%%%%%%%%%%%%%%%%%%
+\subsection{Van Der Corput Sequence}
+The \textbf{Van Der Corput sequence} is a one-dimensional low-discrepancy sequence constructed directly from the Radical Inverse function. For any given base $p$:
 \[
     x_k = \phi_p(k), \quad k = 0, 1, 2, \dots
 \]
 
 \textbf{Properties:}
-- One-dimensional.
-- Uniformly distributed in \([0, 1)\).
-- Useful for basic low-discrepancy sampling in one dimension.
+\begin {itemize}
+	\item 1D and uniformly distributed in \([0, 1)\).
+	\item Useful for basic low-discrepancy sampling in one dimension.
+\end{itemize}
 
 \textbf{Example (Base 2):}
 For \( k = 0, 1, 2, 3, 4, \dots \):
@@ -138,108 +168,155 @@ For \( k = 0, 1, 2, 3, 4, \dots \):
     x_k = \{0, 0.5, 0.25, 0.75, 0.125, \dots\}.
 \]
 
-\subsection{Hammersley Sequence}
-The \textbf{Hammersley sequence} generalizes the Van der Corput sequence into multiple dimensions. It combines the radical inverse function for the first \( d-1 \) dimensions with a uniform scaling for the last dimension. For a sequence of \( N \) samples in \( d \)-dimensions:
+%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Code}
+\begin{lstlisting}[caption={Radical Inverse Function}]
+f32 RadicalInverseVanDerCorputSample(u32 index, u32 base) {
+    f32 inverseBase = 1.0f / base;
+    f32 result = 0.0f;
+    f32 fraction = inverseBase;
+
+    while (index > 0) {
+        result += (index % base) * fraction;
+        index /= base;
+        fraction *= inverseBase;
+    }
+    return result;
+}
+\end{lstlisting}
+
+%%%%%%%%%%%%%%%%%%%%%
+\subsection{Halton Sequence}
+The \textbf{Halton sequence} is a generalization of the Van Der Corput sequence to higher dimensions, using distinct prime bases for each dimension. For a $d$-dimensional sequence:
 \[
-    \mathbf{x}_k = \left( \phi_{p_1}(k), \phi_{p_2}(k), \dots, \phi_{p_{d-1}}(k), \frac{k}{N} \right),
+    H(n) =\mathbf{x}_k = \left( \phi_{p_1}(k), \phi_{p_2}(k), \dots, \phi_{p_d}(k) \right),
+\]
+where $p_1, p_2, \dots, p_d$ are the first \( d \) prime numbers and $\phi_p(n)$ is the radical inverse function in base $p$.
+
+The Halton sequence generates points in multi-dimensional space using co-prime bases (e.g., 2, 3, 5 for dimensions 1, 2, and 3). For dimension $d$
+\[ 
+	H(n) = \bigg(\phi_2(n), \phi_3(n), \dots, \phi_p(n) \bigg)
+\]
+
+%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Code}
+\begin{lstlisting}[caption={Halton Sequence}]
+f32 HaltonSequenceSample(u32 index, u32 base)
+{
+	return RadicalInverseVanDerCorputSample(index, base);
+} 
+\end{lstlisting}
+
+%%%%%%%%%%%%%%%%%%%%%
+\subsection{Hammersley Sequence}
+The \textbf{Hammersley sequence} is a modified variant of the Halton sequence. It combines the radical inverse function for $d-1$ dimensions with a uniform scaling for the first dimension. For a sequence of $N$ samples in $d$-dimensions:
+\[
+    \mathbf{x}_k = \left(\frac{k}{N}, \phi_{p_1}(k), \phi_{p_2}(k), \dots, \phi_{p_{d-1}}(k) \right),
 \]
 where \( p_1, p_2, \dots, p_{d-1} \) are distinct prime bases.
-
-\textbf{Properties:}
-- Multi-dimensional.
-- First \( d-1 \) dimensions use radical inverse functions.
-- The last dimension is uniformly scaled by \( \frac{k}{N} \).
 
 \textbf{Example (2D Hammersley Sequence, Bases 2 and 3):}
 For \( N = 5 \), the sequence is:
 \[
-    \mathbf{x}_k = \left( \phi_2(k), \frac{k}{5} \right), \quad k = 0, 1, 2, 3, 4.
+    \mathbf{x}_k = \left(\frac{k}{5}, \phi_2(k) \right), \quad k = 0, 1, 2, 3, 4.
 \]
 
-\subsection{Halton Sequence}
-The \textbf{Halton sequence} is a further generalization of the Van der Corput sequence to higher dimensions, using distinct prime bases for each dimension. For a \( d \)-dimensional sequence:
-\[
-    \mathbf{x}_k = \left( \phi_{p_1}(k), \phi_{p_2}(k), \dots, \phi_{p_d}(k) \right),
+%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Code}
+\begin{lstlisting}[caption={Hammersley sequence}]
+f32 HammersleySequenceSample(u32 index, u32 base, u32 totalSamples)
+{
+    if (base == 1)
+         return (f32)index / (f32)totalSamples;
+     return RadicalInverseVanDerCorputSample(index, base);
+}
+\end{lstlisting}
+
+%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Hammersely2D}
+The \textbf{Hammersley2D sequence} is a variant of Halton optimized for 2D sampling. For $N$ samples, it generates points, it used the Van Der Corput sequence in base 2 for y dimension:
+\[ 
+	Hammersly2D(n) = \bigg(\frac{n}{N}, \phi_2(n)\bigg), 
 \]
-where \( p_1, p_2, \dots, p_d \) are the first \( d \) prime numbers.
 
-\textbf{Properties:}
-- Multi-dimensional.
-- Uses radical inverse functions for all dimensions.
-- Efficient for low-dimensional sampling.
+\textbf{$\phi_2(n)$ cab be optimized for given sample bits using this trick in this blog\cite{fasthammersely}.} This function is tupicaly used when the number of total sampler are known and is used in sampling BRDF/IBL.
 
-\textbf{Difference Between Hammersley and Halton:}
-- Hammersley uses a uniform scaling for the last dimension (\( \frac{k}{N} \)), while Halton uses the radical inverse function for all dimensions.
-- Halton sequences are more suitable for cases where the number of samples \( N \) is not predetermined.
+%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Code}
+\begin{lstlisting}[caption={Hammersley sequence 2D}]
+vec2 HammersleySequence2DSample(u32 index, u32 totalSamples)
+{
+    return vec2((f32)index / (f32)totalSamples, RadicalInverseVanDerCorputSample(index, 2));
+}
+\end{lstlisting}
 
-\subsection{Summary}
-- The \textbf{radical inverse function} forms the foundation for all these sequences.
-- The \textbf{Van der Corput sequence} is a 1D low-discrepancy sequence based on the radical inverse.
-- The \textbf{Hammersley sequence} extends this to \( d \)-dimensions by combining radical inverse functions with uniform scaling.
-- The \textbf{Halton sequence} generalizes Van der Corput to \( d \)-dimensions using radical inverse functions in distinct prime bases.
+%%%%%
+\newpage
+%%%%%
 
-While Monte Carlo and Importance Sampling improve accuracy, they rely on pseudo-random sequences, which can still lead to uneven sample distribution. **Quasi-random sequences**, like Halton and Hammersley, ensure low-discrepancy distributions, providing better coverage of the domain.
+\begin{lstlisting}[caption={Fast Hammersley sequence 2D}]
+/**
+ * Faster HammersleySequence2D(index, DIM = 2) bitwise trick
+ * based on http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
+ */
+ 
+ float RadicalInverseVdCBase2(uint bits) {
+     bits = (bits << 16u) | (bits >> 16u);
+     bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+     bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+     bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+     bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+     return float(bits) * 2.3283064365386963e-10; // / 0x100000000
+ }
 
-Halton Sequence
-The Halton sequence generates points in multi-dimensional space using coprime bases (e.g., 2, 3, 5 for dimensions 1, 2, and 3). For dimension \( d \):
-\[ H(n) = \bigg(\phi_2(n), \phi_3(n), \dots, \phi_p(n) \bigg), \]
-where \( \phi_b(n) \) is the radical inverse function in base \( b \).
+vec2 HammersleySequence2DFastSample(u32 index, u32 totalSamples)
+{
+    return vec2(f32(index) / f32(totalSamples), RadicalInverseVdCBase2(index));
+}
+\end{lstlisting}
 
-Hammersley Sequence
-The Hammersley sequence is a variant of Halton optimized for 2D integration. For \( N \) samples, it generates points:
-\[ H(n) = \bigg(\frac{n}{N}, \phi_b(n)\bigg), \]
-where \( \phi_b(n) \) is the radical inverse function.
-
-Example in Graphics
-Halton and Hammersley sequences are precomputed for sampling 2D domains like:
-- Pixel sampling in anti-aliasing.
-- Environment map lighting.
-
-For higher dimensions, higher prime bases ensure uniformity.
-
-\subsection{Quasi-Random Sequences}
-Quasi-random sequences, like Halton or Hammersley, are deterministic sequences designed to reduce variance by evenly distributing samples over a domain. These sequences exhibit low-discrepancy, meaning they minimize gaps and clustering compared to purely random sampling.
-
-\subsection{Low-Discrepancy vs High-Discrepancy Sampling}
-The discrepancy of a set of samples measures how evenly they cover the domain:
+%%%%%%%%%%%%%%%%%%%%%
+\subsection{Difference Between Hammersley and Halton:}
 \begin{itemize}
-    \item \textbf{Low-Discrepancy Sampling:} Ensures a uniform distribution, leading to more efficient integration in low-dimensional problems. Examples: Halton, Hammersley, Sobol.
-    \item \textbf{High-Discrepancy Sampling:} Includes purely random or stratified sampling. Often requires more samples to converge but is flexible for higher-dimensional problems.
+	\item Hammersley uses a uniform scaling for the first dimension ($\frac{k}{N}$), while Halton uses the radical inverse function for all dimensions.
+	\item Halton sequences are suitable for cases where the total number of samples $N$ is not predetermined.
 \end{itemize}
 
-\subsection{Examples in Graphics}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Summary}
 \begin{itemize}
-    \item \textbf{Random Sampling:} Pixel anti-aliasing by jittering sample positions within a pixel.
-    \item \textbf{Monte Carlo Sampling:} Path tracing for light transport, where light paths are randomly sampled through the scene.
-    \item \textbf{Low-Discrepancy Sampling:} Environment map sampling using Halton sequences for better distribution of light samples.
+	\item Use \textbf{Monte Carlo} when you cannot define the PDF of the domain.
+	\item Use \textbf{Importance Sampling} when you have a PDF defining the surface of the domain.
+	\item While Monte Carlo and Importance Sampling improve accuracy, they rely on pseudo-random sequences, which can still lead to uneven sample distribution. 
+	\item \textbf{Quasi-random sequences}, like Halton and Hammersley, ensure low-discrepancy distributions, providing better coverage of the domain.
+	\item \textbf{Radical inverse function} forms the foundation for all these quasi-random sequences.
+	\item \textbf{Van Der Corput sequence} is a 1D low-discrepancy sequence based on the radical inverse $\phi_p(k)$. 
+	\item \textbf{Halton sequence} generalizes Van Der Corput to $d$-dimensions using radical inverse functions in distinct prime bases.	
+	\item \textbf{Hammersley sequence} extends this to $d$-dimensions by combining radical inverse functions with uniform scaling in it's first dimension.
+	\item \textbf{Hammersley2D sequence} use a uniform scaling of $\frac{k}{N}$ for the first dimension and $\phi_2(k)$ for second dimension, can be optimized using bit tricks.
+	\item \textit{For higher dimension Radial Inverse sequences, use higher prime bases ($p$) of $\phi_p(k)$.}
 \end{itemize}
 
-\section{Sampling Functions and Names}
-Some commonly used sampling functions include:
+\textbf{Quasi-Random Sampling Functions Usage:}
 \begin{itemize}
-    \item \textbf{Halton Sequence:} Generates low-discrepancy points for multi-dimensional sampling.
-    \item \textbf{Hammersley Sequence:} Optimized for 2D sequences, often used for sampling a hemisphere.
+    \item \textbf{Halton Sequence:} Generates low-discrepancy points for multi-dimensional sampling (e.g., BRDF importance sampling or TAA).
+    \item \textbf{Hammersley Sequence:} Optimized for 2D sequences, often used for sampling a hemisphere in IBL. \textbf{Use it when total no. of samples are known in advance.}
     \item \textbf{Sobol Sequence:} Suitable for higher-dimensional problems, commonly used in global illumination.
     \item \textbf{Stratified Sampling:} Divides the domain into strata to reduce variance in Monte Carlo methods.
     \item \textbf{Blue Noise Sampling:} Ensures even spacing between samples, often used for image sampling and point distributions.
 \end{itemize}
+%%%%%%%%%%%%%%%%%%%%%
+%% BIBLIIOGRAPHY
+	%% [Source]: https://tex.stackexchange.com/questions/514635/cite-without-bibtex
+\begin{thebibliography}{10}
+	\bibitem{gameengineseries} \url{https://www.youtube.com/watch?v=N6xZvrLusPI}
+	\bibitem{shadersmonthly} \url{https://www.youtube.com/watch?v=N6xZvrLusPI}
+	\bibitem{wikiimportance} \url{https://en.wikipedia.org/wiki/Importance_sampling}
+	\bibitem{radicalinverse} \url{https://ttwong12.github.io/papers/udpoint/udpoint.pdf}
+	\bibitem{fasthammersely} \url{http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html}
+\end{thebibliography}
+%%%%%%%%%%%%%%%%%%%%%
 
-\section*{5. Optimizing Quasi-Random Sequences for Graphics}
-
-Precomputing Sequences
-In 2D rendering (e.g., sampling a hemisphere), precomputing Halton or Hammersley sequences ensures faster runtime sampling. Precomputing reduces overhead and avoids generating sequences on-the-fly.
-
- Higher Bases for Higher Dimensions
-As the number of dimensions increases, using higher bases in Halton sequences avoids correlation artifacts and ensures even distribution across dimensions.
-
-Practical Considerations:
-- Use Halton for multi-dimensional sampling (e.g., BRDF importance sampling).
-- Use Hammersley for 2D domains like image-based sampling or anti-aliasing.
-
-\section*{Conclusion}
-
-Efficient sampling is crucial for rendering. Monte Carlo and Importance Sampling provide flexible ways to integrate complex functions, while quasi-random sequences like Halton and Hammersley reduce variance and improve convergence. By combining these methods and optimizing them for specific use cases, graphics programmers can achieve high-quality results with fewer samples.
-
-Use Monte-Carlo when you can define the PDF, if that's possible use importance sampling, if you wan't in-built PDF use quasi-random for low-discrepancy random sequences...but this can cause issues with high-frequency areas so stick to using PDFs then.
+%% TODO: Appendix for function Implementations from Razix Engine
 
 \end{document}
