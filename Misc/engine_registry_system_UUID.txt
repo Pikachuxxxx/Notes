@@ -1,0 +1,207 @@
+
+#include <iostream>
+#include <unordered_map>
+#include <vector>
+#include <string>
+#include <memory>
+#include <mutex>
+#include <thread>
+#include <condition_variable>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <algorithm>
+
+// Generate UUIDs for each system
+using UUID = boost::uuids::uuid;
+
+UUID generateUUID() {
+    static boost::uuids::random_generator generator;
+    return generator();
+}
+
+// Base interface for all systems
+template<class T>
+class IRZSystem {
+public:
+    virtual ~IRZSystem() = default;
+    virtual void StartUp() = 0;
+    virtual void ShutDown() = 0;
+    virtual void Update() = 0;
+
+    // Singleton pattern
+    static T& Instance() {
+        static T instance;
+        return instance;
+    }
+
+protected:
+    IRZSystem() = default;
+};
+
+class SystemRegistry {
+public:
+    static SystemRegistry& Instance() {
+        static SystemRegistry instance;
+        return instance;
+    }
+
+    template<class T>
+    void RegisterSystem(int priority) {
+        UUID typeId = T::TypeId();
+        if (systems.find(typeId) == systems.end()) {
+            systems[typeId] = {&T::Instance(), priority};
+        }
+    }
+
+    IRZSystem<void>* GetSystem(const UUID& typeId) {
+        auto it = systems.find(typeId);
+        return it != systems.end() ? it->second.first : nullptr;
+    }
+
+    void StartUpAll() {
+        for (auto& system : GetSystemsInOrder()) {
+            system.first->StartUp();
+        }
+    }
+
+    void ShutDownAll() {
+        for (auto& system : GetSystemsInOrder()) {
+            system.first->ShutDown();
+        }
+    }
+
+    void UpdateAll() {
+        for (auto& system : GetSystemsInOrder()) {
+            system.first->Update();
+        }
+    }
+
+private:
+    std::unordered_map<UUID, std::pair<IRZSystem<void>*, int>, boost::hash<UUID>> systems;
+
+    std::vector<std::pair<IRZSystem<void>*, int>> GetSystemsInOrder() {
+        std::vector<std::pair<IRZSystem<void>*, int>> orderedSystems(systems.begin(), systems.end());
+        std::sort(orderedSystems.begin(), orderedSystems.end(), [](const auto& a, const auto& b) {
+            return a.second < b.second;
+        });
+        return orderedSystems;
+    }
+};
+
+#define REGISTER_ENGINE_SYSTEM(SystemType, Priority)     namespace {         struct SystemType##Registration {             SystemType##Registration() {                 SystemRegistry::Instance().RegisterSystem<SystemType>(Priority);             }         };         static SystemType##Registration global_##SystemType##Registration;     }
+
+class VirtualFileSystem : public IRZSystem<VirtualFileSystem> {
+    friend class IRZSystem<VirtualFileSystem>;
+
+public:
+    static UUID TypeId() {
+        static UUID id = generateUUID();
+        return id;
+    }
+
+    void StartUp() override {
+        std::cout << "VirtualFileSystem starting up..." << std::endl;
+    }
+
+    void ShutDown() override {
+        std::cout << "VirtualFileSystem shutting down..." << std::endl;
+    }
+
+    void Update() override {
+        std::cout << "VirtualFileSystem updating..." << std::endl;
+    }
+
+private:
+    VirtualFileSystem() = default;
+};
+
+REGISTER_ENGINE_SYSTEM(VirtualFileSystem, 1)
+
+class RenderThread {
+public:
+    void Start() {
+        renderThread = std::thread(&RenderThread::Run, this);
+    }
+
+    void Join() {
+        if (renderThread.joinable()) {
+            renderThread.join();
+        }
+    }
+
+    void SignalStop() {
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            stop = true;
+        }
+        cv.notify_all();
+    }
+
+private:
+    void Run() {
+        std::unique_lock<std::mutex> lock(mutex);
+        while (!stop) {
+            cv.wait(lock);
+            // Render logic here
+            std::cout << "RenderThread running..." << std::endl;
+        }
+    }
+
+    std::thread renderThread;
+    std::mutex mutex;
+    std::condition_variable cv;
+    bool stop = false;
+};
+
+class RenderSystem : public IRZSystem<RenderSystem> {
+    friend class IRZSystem<RenderSystem>;
+
+public:
+    static UUID TypeId() {
+        static UUID id = generateUUID();
+        return id;
+    }
+
+    void StartUp() override {
+        std::cout << "RenderSystem starting up..." << std::endl;
+        renderThread.Start();
+    }
+
+    void ShutDown() override {
+        std::cout << "RenderSystem shutting down..." << std::endl;
+        renderThread.SignalStop();
+        renderThread.Join();
+    }
+
+    void Update() override {
+        std::cout << "RenderSystem updating..." << std::endl;
+        // Synchronize with render thread here
+        // Example: notify the render thread
+        renderThread.cv.notify_all();
+    }
+
+private:
+    RenderSystem() = default;
+    RenderThread renderThread;
+};
+
+REGISTER_ENGINE_SYSTEM(RenderSystem, 2)
+
+int main() {
+    SystemRegistry& registry = SystemRegistry::Instance();
+
+    // Start up all systems
+    registry.StartUpAll();
+
+    // Simulate a game loop
+    for (int i = 0; i < 3; ++i) {
+        registry.UpdateAll();
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    // Shut down all systems
+    registry.ShutDownAll();
+
+    return 0;
+}
