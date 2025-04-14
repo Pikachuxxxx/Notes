@@ -1,0 +1,50 @@
+\documentclass{article}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+
+\begin{document}
+
+\title{Understanding the Rendering Equation as a Convolution}
+\author{}
+\date{}
+\maketitle
+
+\section{Introduction}
+The rendering equation is the foundation of physically based rendering (PBR). It models how light interacts with surfaces and is mathematically expressed as:
+
+\begin{equation}
+L_o(\omega_o) = \int_{\Omega} f_r(\omega_o, \omega_i) L_i(\omega_i) (\omega_i \cdot n) d\omega_i.
+\end{equation}
+
+This equation states that the outgoing radiance \( L_o(\omega_o) \) at a point is the integral of the incoming radiance \( L_i(\omega_i) \) weighted by the surface's Bidirectional Reflectance Distribution Function (BRDF) \( f_r(\omega_o, \omega_i) \) and a cosine term \( (\omega_i \cdot n) \), which accounts for the angle of incidence.
+
+\section{Interpreting the Rendering Equation as a Convolution}
+Mathematically, convolution is defined as:
+
+\begin{equation}
+(f * g)(t) = \int f(\tau) g(t - \tau) d\tau.
+\end{equation}
+
+Comparing this with the rendering equation, we can interpret it as a convolution where:
+
+\begin{itemize}
+    \item \( L_i(\omega_i) \) represents the incoming function (irradiance),
+    \item \( f_r(\omega_o, \omega_i) \cdot (\omega_i \cdot n) \) acts as the convolution kernel (filter),
+    \item The result is the outgoing radiance \( L_o(\omega_o) \), a transformed version of \( L_i \).
+\end{itemize}
+
+Thus, the rendering equation describes how **incoming light is filtered by the surface BRDF**, much like a signal being processed by a convolution filter.
+
+\section{Importance Sampling and PDFs in Monte Carlo Integration}
+Since direct computation of the integral is intractable, Monte Carlo integration is used:
+
+\begin{equation}
+L_o(\omega_o) \approx \frac{1}{N} \sum_{i=1}^{N} \frac{f_r(\omega_o, \omega_i) L_i(\omega_i) (\omega_i \cdot n)}{p(\omega_i)}.
+\end{equation}
+
+The Probability Density Function (PDF), \( p(\omega_i) \), determines which directions are sampled more frequently. By choosing \( p(\omega_i) \) proportional to \( \cos\theta \), we optimize the sampling efficiency, reducing noise while maintaining accuracy.
+
+\section{Conclusion}
+This interpretation lays the foundation for understanding **BxDFs** as convolution filters that shape light reflections, and **Image-Based Lighting (IBL)** as an extension of the rendering equation. The next sections will explore these concepts in detail.
+
+\end{document}
